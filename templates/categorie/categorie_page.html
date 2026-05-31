@@ -1,0 +1,182 @@
+{% include 'include/header.html' %}
+<script>
+  $(function () {
+    // 무한스크롤 변수
+    currentPage = 2;
+    isLoading = false;
+    hasNextPage = true;
+
+  });
+
+  // 무한스크롤 함수
+  function loadMorePosts() {
+    isLoading = true;
+    $('#loader').show();
+    const orderKey = $('select[name="order_key"]').val();
+
+    $.ajax({
+      url: "{{ url_for('api.get_categorie_posts') }}", 
+      type: 'GET',
+      data: { page: currentPage, order_key: orderKey, categorie_no: {{ result[0].categorie_no }} },
+      success: function(response) {
+          if (response.status === 'success' && response.posts.length > 0) {
+              response.posts.forEach(function(post) {
+                  const postHtml = createPostHtml(post); 
+                  $('#post-container').append(postHtml);
+              });
+              currentPage++;
+          } else {
+              hasNextPage = false;
+              $('#end-of-posts').show();
+          }
+      },
+      error: function(error) {
+          console.error("Error loading posts:", error);
+      },
+      complete: function() {
+          isLoading = false;
+          $('#loader').hide();
+      }
+    });
+  }
+  // 무한스크롤 함수
+  // 함수 이름 통일: createPostHtml
+  function createPostHtml(post) {
+    const template = document.getElementById('post-template');
+    const clone = document.importNode(template.content, true);
+
+    clone.querySelector('.user-pf-img').src = `/static/img/${post.user_pf_img}.jpg`;
+    clone.querySelector('.user-id').textContent = post.user_id;
+    clone.querySelector('.write-date').textContent = post.board_write_date;
+    clone.querySelector('.board-title').textContent = post.board_title;
+    clone.querySelector('.board-note').textContent = post.board_note;
+    clone.querySelector('.vote-count').textContent = post.like_count;
+    
+    const likeButton = clone.querySelector('.vote-btn-single');
+    if (post.user_has_liked) {
+        likeButton.classList.add('active');
+    }
+    likeButton.setAttribute('onclick', `DoLike(this, ${post.board_no})`);
+
+    const tagsContainer = clone.querySelector('.tags-container');
+    post.tags.forEach(tag => {
+        const tagLink = document.createElement('a');
+        tagLink.href = `javascript:GoPage('${tag}');`;
+        tagLink.className = 'badge bg-secondary text-decoration-none me-1';
+        tagLink.textContent = tag;
+        tagsContainer.appendChild(tagLink);
+    });
+
+    const currentUserNo = {{ session['user_data']['user_no'] if session['user_data'] else 'null' }};
+    if (currentUserNo && currentUserNo === post.user_no) {
+        const configContainer = clone.querySelector('.config-buttons');
+        configContainer.innerHTML = `
+            <a href="/board/modify.do?board_no=${post.board_no}" class="text-body-tertiary configBtn"><i class="bi bi-pencil-square fs-3"></i></a>
+            <a href="javascript:DoDelete(${post.board_no},${post.user_no});" class="text-body-tertiary configBtn"><i class="bi bi-trash3-fill m-1 p-1 fs-3"></i></a>
+        `;
+    }
+
+    // categorie_pate.html에는 캐러셀이 없으므로 제거
+    clone.querySelector('.carousel-container').remove();
+    return clone;
+  }
+
+
+
+</script>
+<!-- 컨텐츠 출력 공간 -->
+<div>
+  <div class="cover_image bg-dark-subtle" style="height: 120px;"></div>
+  <div>
+    <div class="m-2 p-2 d-flex align-items-center" style="height: 50px;">
+      <div class="w-25">
+
+        <div class="categorie_thumb">
+          <img class="contentBorder bg-body-secondary"
+            src="{{ url_for('static', filename='img/category_icons/' ~ result[0].categorie_pf_img_name ~ '') }}"
+            width="100px" height="100px">
+        </div>
+      </div>
+      <div class="me-auto text-start">
+        <div class="fw-bold fs-3">{{ result[0].categorie_name }}</div>
+        <div class="text-muted small"><span id="categorie_sub_count_{{ result[0].categorie_no }}">{{ result[0].subscribe_count }}</span> 팔로워</div>
+      </div>
+      <div class="me-2">
+        {% if session['user_data'] %}
+        <button class="btn btn-outline-dark"
+          onclick="location.href='/board/write.do?categorie_no={{result[0].categorie_no}}&categorie_parent_no={{result[0].categorie_parent_no}}'">관련
+          글 쓰기</button>
+        {% endif %}
+      </div>
+      <div class="vote-buttons-group">
+        <button class="vote-btn-single {% if result[0].user_has_sub %}active{% endif %}" type="button" onclick="DoSubscribe(event, this, {{ result[0].categorie_no }})">
+          <span class="vote-count" id="categorie_sub_status_{{ result[0].categorie_no }}">{% if result[0].user_has_sub %} 구독 중 {% else %} 구독하기 {% endif %}</span>
+        </button>
+      </div>
+    </div>
+    <div class="m-2 p-2 d-flex align-items-center" style="height: 50px;">
+      <div class="ms-5">{{result[0].info}}</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bd-b-1 my-3 mx-1"></div>
+
+<form method="get" action="{{ url_for('categorie.categorie_page') }}" id="selectForm">
+  <input type="hidden" name="categorie_no" value="{{result[0].categorie_no}}">
+  <select name="order_key" class="form-select w-25">
+    <option value="like_count desc" {% if order_key=='like_count desc' %}selected{% endif %}>인기순</option>
+    <option value="board_no desc" {% if order_key=='board_no desc' %}selected{% endif %}>최신순</option>
+    <option value="board_no" {% if order_key=='board_no' %}selected{% endif %}>오래된순</option>
+  </select>
+</form>
+
+<div class="bd-b-1 my-3 mx-1"></div>
+{% for item in result[1] %}
+<div class="flex-grow p-2">
+  <div class="d-flex align-items-center">
+    <div class="me-2 contentBorder">
+      <img class="contentBorder" src="{{ url_for('static', filename='img/' ~ item.user_pf_img ~ '.jpg') }}" width="60px"
+        height="60px">
+    </div>
+    <div class="me-auto text-start fs-5">
+      <div class="fw-bold">{{ item.user_id }}</div>
+      <span class="text-muted small">{{ item.board_write_date }}</span>
+    </div>
+    {% if session['user_data'] %}
+      {% if session['user_data']['user_no'] == item.user_no %}
+      <div class="me-2">
+        <a href="/board/modify.do?board_no={{item.board_no}}"
+          class="text-body-tertiary configBtn"><i class="bi bi-pencil-square fs-3"></i></a>
+        <a href="javascript:DoDelete({{item.board_no}},{{item.user_no}});" class="text-body-tertiary configBtn"><i
+            class="bi bi-trash3-fill m-1 p-1 fs-3"></i></a>
+      </div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <div class="my-2 fs-4">
+    <div class="fw-bold my-2">
+      {{ item.board_title }}
+    </div>
+    <div>
+      {{ item.board_note }}
+      <br>
+      {% for tag in item.tags %}
+        <a href="javascript:GoPage('{{tag}}');" class="badge bg-secondary text-decoration-none me-1">{{tag}}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="vote-buttons-group">
+    <button class="vote-btn-single {% if item.user_has_liked %}active{% endif %}" type="button" onclick="DoLike(this, {{ item.board_no }})">
+      ❤<span class="vote-count" id="board_like_count_{{ item.board_no }}">{{ item.like_count }}</span>
+    </button>
+  </div>
+</div>
+<div class="bd-b-1 my-3 mx-1"></div>
+{% endfor %}
+
+<!-- *************** -->
+{% include 'include/tail.html' %}

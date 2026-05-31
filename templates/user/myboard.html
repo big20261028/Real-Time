@@ -1,0 +1,268 @@
+{% include 'include/header.html' %}
+<script>
+  $(function () {
+    // 무한스크롤 변수
+    currentPage = 2;
+    isLoading = false;
+    hasNextPage = true;
+
+
+
+  });
+  // 무한스크롤 함수
+  function loadMorePosts() {
+    isLoading = true;
+    $('#loader').show();
+    const orderKey = $('select[name="order_key"]').val();
+
+    $.ajax({
+      url: "{{ url_for('api.get_my_posts') }}", // myboard용 API
+      type: 'GET',
+      data: { page: currentPage, order_key: orderKey },
+      success: function (response) {
+        if (response.status === 'success' && response.posts.length > 0) {
+          response.posts.forEach(function (post) {
+            const postHtml = createPostHtml(post);
+            $('#post-container').append(postHtml);
+          });
+          currentPage++;
+        } else {
+          hasNextPage = false;
+          $('#end-of-posts').show();
+        }
+      },
+      error: function (error) {
+        console.error("Error loading posts:", error);
+      },
+      complete: function () {
+        isLoading = false;
+        $('#loader').hide();
+      }
+    });
+  }
+  // 무한스크롤 함수
+  // 함수 이름 통일: createPostHtml
+  function createPostHtml(post) {
+    const template = document.getElementById('post-template');
+    const clone = document.importNode(template.content, true);
+
+    clone.querySelector('.user-pf-img').src = `/static/img/${post.user_pf_img}.jpg`;
+    clone.querySelector('.user-id').textContent = post.user_id;
+    clone.querySelector('.write-date').textContent = post.board_write_date;
+    clone.querySelector('.board-title').textContent = post.board_title;
+    clone.querySelector('.board-note').textContent = post.board_note;
+    clone.querySelector('.vote-count').textContent = post.like_count;
+
+    const likeButton = clone.querySelector('.vote-btn-single');
+    if (post.user_has_liked) {
+      likeButton.classList.add('active');
+    }
+    likeButton.setAttribute('onclick', `DoLike(this, ${post.board_no})`);
+
+    const tagsContainer = clone.querySelector('.tags-container');
+    post.tags.forEach(tag => {
+      const tagLink = document.createElement('a');
+      tagLink.href = `javascript:GoPage('${tag}');`;
+      tagLink.className = 'badge bg-secondary text-decoration-none me-1';
+      tagLink.textContent = tag;
+      tagsContainer.appendChild(tagLink);
+    });
+
+    // myboard.html에서는 항상 내 글이므로, 수정/삭제 버튼을 항상 보여줍니다.
+    const configContainer = clone.querySelector('.config-buttons');
+    configContainer.innerHTML = `
+        <a href="/board/modify.do?board_no=${post.board_no}" class="text-body-tertiary configBtn"><i class="bi bi-pencil-square fs-3"></i></a>
+        <a href="javascript:DoDelete(${post.board_no},${post.user_no});" class="text-body-tertiary configBtn"><i class="bi bi-trash3-fill m-1 p-1 fs-3"></i></a>
+    `;
+
+    const carouselContainer = clone.querySelector('.carousel-container');
+    const similarPosts = post.similar_board_list || [];
+
+    if (similarPosts.length > 0) {
+        const carousel = carouselContainer.querySelector('.carousel');
+        const carouselInner = carousel.querySelector('.carousel-inner');
+        
+        // 각 캐러셀에 고유 ID 부여 (필수!)
+        const carouselId = `carousel-${post.board_no}`;
+        carousel.id = carouselId;
+        
+        // 캐러셀 컨트롤 버튼에 data-bs-target 설정
+        carousel.querySelector('.carousel-control-prev').setAttribute('data-bs-target', `#${carouselId}`);
+        carousel.querySelector('.carousel-control-next').setAttribute('data-bs-target', `#${carouselId}`);
+
+        // 유사 게시물 데이터를 2개씩 묶어 캐러셀 아이템 생성
+        for (let i = 0; i < similarPosts.length; i += 2) {
+            const carouselItem = document.createElement('div');
+            carouselItem.className = `carousel-item ${i === 0 ? 'active' : ''} container text-center mt-2`;
+            
+            const row = document.createElement('div');
+            row.className = 'row';
+
+            // 한 row에 최대 2개의 아이템 추가
+            for (let j = i; j < i + 2 && j < similarPosts.length; j++) {
+                const dto = similarPosts[j];
+                const col = document.createElement('div');
+                col.className = 'col contentBorder mx-1 d-flex flex-column p-0 carouselContent contentHover';
+                col.onclick = () => { location.href = `/user/userpage.do?user_no=${dto.user_no}&board_no=${dto.board_no}`; };
+                
+                // toFixed(2)로 소수점 2자리까지 표시
+                const score = parseFloat(dto.score).toFixed(2);
+                
+                // truncate 함수 (긴 텍스트 자르기용 헬퍼)
+                const truncate = (str, len) => str.length > len ? str.substring(0, len) + '...' : str;
+
+                col.innerHTML = `
+                    <div class="mb-2 fs-5 text-start px-2">
+                        <div class="fw-bold my-2">${truncate(dto.board_title, 20)}</div>
+                        <div>${truncate(dto.board_note, 50)}</div>
+                    </div>
+                    <div class="p-2 d-flex align-items-end mt-auto">
+                        <div class="me-2">
+                            <img class="contentBorder" src="/static/img/${dto.user_pf_img}.jpg" width="50px" height="50px" alt="Profile Image">
+                        </div>
+                        <div class="me-auto text-start">
+                            <div class="fw-bold">${dto.user_id}</div>
+                            <div class="text-muted small">${dto.board_write_date}</div>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-dark" 
+                              onclick="event.stopPropagation(); location.href='/ai/score_info.do?from_board_no=${post.board_no}&score=${score}';">
+                                <i class="bi bi-android me-1"></i>${score}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                row.appendChild(col);
+            }
+            carouselItem.appendChild(row);
+            carouselInner.appendChild(carouselItem);
+        }
+    } else {
+        // 유사 게시물이 없으면 캐러셀 컨테이너 자체를 삭제
+        carouselContainer.remove();
+    }
+
+    return clone;
+}
+</script>
+<div class="d-flex justify-content-center">
+  <div class="pt-2 flex-grow-1">
+    <h3 class="fw-bold m-0">나의 글</h3>
+  </div>
+  <div class="pt-2">
+    <button type="button" class="btn btn-outline-secondary" onclick="location.href='/board/write.do'">글 쓰기</button>
+  </div>
+</div>
+
+<div class="bd-b-1 my-3 mx-1"></div>
+<form method="get" action="/user/myboard.do" id="selectForm">
+  <select name="order_key" class="form-select w-25">
+    <option value="like_count desc" {% if order_key=='like_count desc' %}selected{% endif %}>인기순</option>
+    <option value="board_no desc" {% if order_key=='board_no desc' %}selected{% endif %}>최신순</option>
+    <option value="board_no" {% if order_key=='board_no' %}selected{% endif %}>오래된순</option>
+  </select>
+</form>
+<div class="bd-b-1 my-3 mx-1"></div>
+
+{% for item in board_list %}
+<div class="flex-grow p-2">
+  <div class="d-flex align-items-center">
+    <div class="me-2">
+      <img class="contentBorder" src="{{ url_for('static', filename='img/' ~ item.user_pf_img ~ '.jpg') }}" width="60px"
+        height="60px">
+    </div>
+    <div class="me-auto text-start fs-5">
+      <div class="fw-bold">{{ item.user_id }}</div>
+      <span class="text-muted small">{{ item.board_write_date }}</span>
+    </div>
+    <div class="me-2">
+      <a href="/board/modify.do?board_no={{item.board_no}}" class="text-body-tertiary configBtn"><i
+          class="bi bi-pencil-square fs-3"></i></a>
+      <a href="javascript:DoDelete({{item.board_no}},{{item.user_no}});" class="text-body-tertiary configBtn"><i
+          class="bi bi-trash3-fill m-1 p-1 fs-3"></i></a>
+    </div>
+  </div>
+  <div class="my-2 fs-4">
+    <div class="fw-bold my-2">
+      {{ item.board_title }}
+    </div>
+    <div>
+      {{ item.board_note }}
+      <br>
+      {% for tag in item.tags %}
+      <a href="javascript:GoPage('{{tag}}');" class="badge bg-secondary text-decoration-none me-1">{{tag}}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="vote-buttons-group">
+    <button class="vote-btn-single {% if item.user_has_liked %}active{% endif %}" type="button"
+      onclick="DoLike(this, {{ item.board_no }})">
+      ❤<span class="vote-count" id="board_like_count_{{ item.board_no }}">{{ item.like_count }}</span>
+    </button>
+  </div>
+
+  <div>
+    <div id="carouselExample" class="carousel slide">
+      <div class="carousel-inner">
+        {# loop.index0를 사용하여 0부터 시작하는 인덱스를 얻습니다 #}
+        {% for dto in item.similar_board_list %}
+        {# 각 캐러셀 아이템이 2개의 콘텐츠를 담도록 합니다 #}
+        {# 0, 2, 4...일 때 새로운 carousel-item을 시작합니다. #}
+        {% if loop.index0 % 2 == 0 %}
+        <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %} container text-center mt-2">
+          <div class="row">
+            {% endif %}
+
+            <div class="col contentBorder mx-1 d-flex flex-column p-0 carouselContent contentHover"
+              onclick="location.href='/user/userpage.do?user_no={{dto.user_no}}&board_no={{dto.board_no}}'">
+              <div class="mb-2 fs-5 text-start px-2">
+                <div class="fw-bold my-2">
+                  {{ dto.board_title|truncate(20, end='...') }}
+                </div>
+                <div>
+                  {{ dto.board_note|truncate(50, end='...') }}
+                </div>
+              </div>
+              <div class="p-2 d-flex align-items-end mt-auto">
+                <div class="me-2">
+                  <img class="contentBorder" src="{{ url_for('static', filename='img/' ~ dto.user_pf_img ~ '.jpg') }}"
+                    width="50px" height="50px" alt="Profile Image"> {# alt 속성 추가 권장 #}
+                </div>
+                <div class="me-auto text-start">
+                  <div class="fw-bold">{{dto.user_id}}</div>
+                  <div class="text-muted small">{{dto.board_write_date}}</div>
+                </div>
+                <div class="">
+                  <button class="btn btn-outline-dark"
+                    onclick="event.stopPropagation(); location.href=`/ai/score_info.do?from_board_no={{ item.board_no }}&score={{ '%.2f'|format(dto.score|float) }}&to_board_no={{dto.board_no}}`;">
+                    <i class="bi bi-android me-1"></i>{{ "%.2f"|format(dto.score|float) }} {# 소수점 둘째 자리까지 포맷팅 #}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {# 1, 3, 5...일 때 또는 마지막 아이템일 때 carousel-item을 닫습니다. #}
+            {% if loop.index0 % 2 == 1 or loop.last %}
+          </div> {# End of row #}
+        </div> {# End of carousel-item #}
+        {% endif %}
+        {% endfor %}
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+<div class="bd-b-1 my-3 mx-1"></div>
+{% endfor %}
+
+
+{% include 'include/tail.html' %}

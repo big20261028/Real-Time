@@ -1,0 +1,145 @@
+<!-- 로딩 인디케이터 및 마지막 메시지 영역 (공통) -->
+<div id="post-container">
+  
+</div>
+<div id="loader" class="text-center py-4" style="display: none;">
+    <img src="{{ url_for('static', filename='img/loading.gif') }}" alt="Loading..." width="50">
+</div>
+<div id="end-of-posts" class="text-center text-muted py-4" style="display: none;">
+    마지막 게시물입니다.
+</div>
+
+<!-- 게시물 항목을 위한 HTML 템플릿 (공통) -->
+<template id="post-template">
+    <!-- 이 부분의 구조는 recommend.html의 서버 렌더링 부분과 일치해야 합니다. -->
+    <div class="post-item">
+        <div class="flex-grow p-2">
+            <div class="d-flex align-items-center">
+                <div class="me-2">
+                    <img class="contentBorder user-pf-img" width="60px" height="60px" src="">
+                </div>
+                <div class="me-auto text-start fs-5">
+                    <div class="fw-bold user-id"></div>
+                    <span class="text-muted small write-date"></span>
+                </div>
+                <div class="config-buttons me-2"></div>
+            </div>
+            <div class="my-2 fs-4">
+                <div class="fw-bold board-title"></div>
+                <div>
+                    <span class="board-note"></span><br>
+                    <span class="tags-container"></span>
+                </div>
+            </div>
+            <div class="vote-buttons-group">
+                <button class="vote-btn-single" type="button">
+                    ❤<span class="vote-count"></span>
+                </button>
+            </div>
+            <!-- 캐러셀 등 추가 구조가 필요하면 여기에 추가 -->
+            <div class="carousel-container"></div>
+        </div>
+        <div class="bd-b-1 my-3 mx-1"></div>
+    </div>
+</template>
+
+
+
+</div>
+</main>
+</div>
+<footer class="bg-light border-top">
+  <div class="container py-4">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <h5 class="fw-bold">지능형 SNS</h5>
+        <p class="text-muted small">
+          AI 기술을 통해 연결되는 새로운 소셜 경험을 만나보세요.
+        </p>
+        <p class="text-muted mb-0">
+          대표: 지능형 SNS 운영팀<br>
+          주소: 대한민국 전북특별자치도 전주시 완산구 팔달로 1234 (가상 주소)<br>
+          이메일: <a href="mailto:support@intelligentsns.com"
+            class="text-decoration-none text-muted">support@intelligentsns.com</a><br>
+          사업자등록번호: 123-45-67890 (가상 번호)
+        </p>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <h5 class="fw-bold">탐색</h5>
+        <ul class="list-unstyled text-muted">
+          <li class="mb-1"><a href="/index.do" class="text-decoration-none text-muted">홈</a></li>
+          <li class="mb-1"><a href="/index.do" class="text-decoration-none text-muted">추천글</a></li>
+          <li class="mb-1"><a href="/index.do" class="text-decoration-none text-muted">인기글</a></li>
+          <li class="mb-1"><a href="#" class="text-decoration-none text-muted">커뮤니티 가이드라인</a></li>
+          <li class="mb-1"><a href="#" class="text-decoration-none text-muted">공지사항</a></li>
+        </ul>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <h5 class="fw-bold">법률 및 정책</h5>
+        <ul class="list-unstyled text-muted">
+          <li class="mb-1"><a href="#" class="text-decoration-none text-muted">개인정보처리방침</a></li>
+          <li class="mb-1"><a href="#" class="text-decoration-none text-muted">이용약관</a></li>
+          <li class="mb-1"><a href="#" class="text-decoration-none text-muted">청소년 보호정책</a></li>
+        </ul>
+        <h5 class="fw-bold mt-4">소셜 미디어</h5>
+        <div>
+          <a href="#" class="text-muted me-3"><i class="fab fa-facebook-f fa-lg"></i><span
+              class="visually-hidden">Facebook</span></a>
+          <a href="#" class="text-muted me-3"><i class="fab fa-twitter fa-lg"></i><span
+              class="visually-hidden">Twitter</span></a>
+          <a href="#" class="text-muted me-3"><i class="fab fa-instagram fa-lg"></i><span
+              class="visually-hidden">Instagram</span></a>
+          <a href="#" class="text-muted"><i class="fab fa-youtube fa-lg"></i><span
+              class="visually-hidden">YouTube</span></a>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-4">
+    <div class="row">
+      <div class="col-12 text-center text-muted small">
+        <p class="mb-0">
+          &copy; 2025 지능형 SNS. 모든 권리 보유.
+          <br>
+          본 웹사이트는 학습 및 포트폴리오 목적으로 제작되었으며, 실제 서비스가 아닙니다.
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header justify-content-center">
+        <h2 class="modal-title" id="loginModalLabel">로그인</h5>
+          <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
+            aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% include 'user/login.html' %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="joinModal" tabindex="-1" aria-labelledby="joinModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header justify-content-center">
+        <h2 class="modal-title" id="loginModalLabel">회원가입</h5>
+          <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
+            aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% include 'user/join.html' %}
+      </div>
+    </div>
+  </div>
+</div>
+<!-- modal End -->
+</body>
+
+</html>

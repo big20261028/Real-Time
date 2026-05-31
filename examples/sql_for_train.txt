@@ -1,0 +1,18 @@
+select user_no,board_no,sum(score) as score
+from
+(
+SELECT user_no, board_no,1.0 as score
+FROM like_info
+union
+SELECT s.user_no, b.board_no,0.5 as score
+FROM subscribe s JOIN board b ON s.categorie_no = b.categorie_no
+) x
+group by user_no,board_no;
+
+//해석
+union은 컬럼 명이 동일해야 사용 가능
+like_info에서 select한 user_no,board_no,score에
+subscribe에서 select한 동일 컬럼 데이터를 새로운 행으로 추가한 테이블 제작
+괄호로 묶어 x라는 이름의 테이블로 선언
+x 테이블에서 user_no,board_no,sum(score) as score 
+sum(score)를 위해 group by로 user_no, board_no가 같은 데이터로 묶음

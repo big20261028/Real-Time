@@ -1,0 +1,75 @@
+<script>
+  $(function(){
+    $("#joinBtn").click(function(){
+      DoJoin()
+    });
+
+
+
+    function DoJoin()
+    {
+      if( $("#join_user_id").val() == "" )
+      {
+        alert("아이디를 입력해주세요.");
+				$("#join_user_id").focus();
+				return;
+      };
+      if( $("#join_user_pw").val() == "" )
+      {
+        alert("비밀번호를 입력해주세요.");
+				$("#join_user_pw").focus();
+				return;
+      };
+      if( $("#join_user_pw").val() != $("#join_user_pw_check").val())
+			{
+				alert("비밀번호가 일치하지 않습니다.");
+				$("#join_user_pw").focus();
+				return;
+			};
+      $("#joinFrm").submit();
+    };
+
+  });
+
+</script>
+
+<div class="container text-center p-5">
+  <form action="{{ url_for('user.joinOk')}}" method="POST" id="joinFrm">
+    <div class="form-floating mb-3">
+      <input type="email" class="form-control" id="join_user_id" name="user_id" placeholder="name@example.com">
+      <label for="floatingInput">아이디</label>
+    </div>
+    <div class="form-floating mb-3">
+      <input type="password" class="form-control" id="join_user_pw" name="user_pw" placeholder="Password">
+      <label for="floatingPassword">비밀번호</label>
+    </div>
+    <div class="form-floating mb-3">
+      <input type="password" class="form-control" id="join_user_pw_check" name="user_pw_check" placeholder="Password">
+      <label for="floatingPassword">비밀번호 확인</label>
+    </div>
+    <h4 class="form-label mb-3">프로필 사진 선택</h4>
+    <div class="form-floating mb-3">
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="user_pf_img" id="user_pf_img_00" value="0" checked>
+        <label class="form-check-label" for="inlineRadio1">
+          <img class="contentBorder" src="{{ url_for('static', filename='img/0.jpg') }}" width="60px" height="60px">
+        </label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="user_pf_img" id="user_pf_img_01" value="1">
+        <label class="form-check-label" for="inlineRadio2">
+          <img class="contentBorder" src="{{ url_for('static', filename='img/1.jpg') }}" width="60px" height="60px">
+        </label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="user_pf_img" id="user_pf_img_02" value="2">
+        <label class="form-check-label" for="inlineRadio3">
+          <img class="contentBorder" src="{{ url_for('static', filename='img/2.jpg') }}" width="60px" height="60px">
+        </label>
+      </div>
+    </div>
+    <div class="container p-3">
+      <input type="button" class="btn btn-secondary btn-lg" id="joinBtn" style="width: 150px;" value="회원가입">
+    </div>
+  </form>
+</div>

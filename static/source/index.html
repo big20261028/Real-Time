@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Style Layout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            min-width: 768px; /* 페이지 최소 너비 유지 */
+            background-color: #f0f2f5; /* Reddit와 유사한 배경색 */
+        }
+
+        .container-fluid {
+            max-width: 1200px; /* 전체 컨테이너의 최대 너비 설정 */
+            margin: 0 auto; /* 중앙 정렬 */
+            padding: 0; /* Bootstrap 기본 패딩 제거 */
+        }
+
+        /* 헤더 스타일 */
+        header .navbar {
+            background-color: #ffffff !important; /* 헤더 배경색 흰색 */
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0.5rem 1rem;
+        }
+
+        .navbar-brand img {
+            height: 40px; /* 로고 높이 조절 */
+            width: auto;
+            object-fit: contain;
+            margin-left: 0.5rem; /* 이미지에서 로고 텍스트 분리 시 간격 */
+        }
+        .navbar-brand span {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff4500; /* Reddit 로고 색상 */
+            margin-left: 0.5rem;
+        }
+
+        .header-search-form {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            margin: 0 1rem; /* 좌우 마진 */
+        }
+
+        .header-search-form .input-group {
+            max-width: 500px; /* 검색창 최대 너비 */
+            width: 100%;
+        }
+
+        .header-search-form .form-control {
+            border-radius: 20px; /* 둥근 검색창 */
+            padding-left: 1.5rem;
+            background-color: #f0f2f5; /* 검색창 배경색 */
+            border: 1px solid #e0e0e0;
+        }
+        .header-search-form .input-group-text {
+            background-color: #f0f2f5; /* 검색 아이콘 배경색 */
+            border-radius: 20px; /* 둥근 검색 아이콘 */
+            border: 1px solid #e0e0e0;
+            border-right: none; /* 아이콘과 입력창 사이 경계선 제거 */
+            padding-left: 1rem;
+        }
+        .header-search-form .form-control:focus {
+            background-color: #ffffff;
+            border-color: #007bff; /* 포커스 시 테두리 색상 */
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        /* 헤더의 로그인/로그아웃 버튼 */
+        .header-auth-buttons {
+            display: flex;
+            align-items: center;
+        }
+        .header-auth-buttons .btn {
+            white-space: nowrap; /* 버튼 텍스트 줄바꿈 방지 */
+            padding: 0.5rem 1rem;
+            border-radius: 20px; /* 둥근 버튼 */
+            font-weight: bold;
+        }
+        .header-auth-buttons .btn-primary {
+            background-color: #ff4500;
+            border-color: #ff4500;
+        }
+        .header-auth-buttons .btn-primary:hover {
+            background-color: #e03c00;
+            border-color: #e03c00;
+        }
+        .header-auth-buttons .btn-outline-danger {
+            color: #ff4500;
+            border-color: #ff4500;
+        }
+        .header-auth-buttons .btn-outline-danger:hover {
+            background-color: #ff4500;
+            color: #ffffff;
+        }
+
+
+        /* 메인 콘텐츠 영역 */
+        #main-content-area {
+            padding-top: 1rem; /* 헤더 아래 여백 */
+            align-items: flex-start; /* 사이드바와 메인 콘텐츠 상단 정렬 */
+        }
+
+        /* 사이드바 스타일 */
+        #sidebar-wrapper {
+            background-color: #ffffff; /* 사이드바 배경 흰색 */
+            padding: 1rem;
+            border-right: 1px solid #e0e0e0;
+            flex-shrink: 0;
+            width: 250px;
+            margin-right: 1rem; /* 사이드바와 메인 콘텐츠 사이 간격 */
+            border-radius: 8px; /* 둥근 모서리 */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* 약간의 그림자 */
+        }
+
+        #sidebar-wrapper h5 {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #333;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.5rem;
+        }
+
+        #sidebar-wrapper hr {
+            margin: 1rem 0;
+        }
+
+        /* 사이드바 메뉴 링크 (버튼처럼 보이게) */
+        #sidebar-wrapper .nav-item .nav-link {
+            display: block; /* 블록 요소로 만들어 너비 전체 사용 */
+            width: 100%; /* 부모 너비에 꽉 차게 */
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 4px; /* 둥근 모서리 */
+            text-align: left; /* 텍스트 왼쪽 정렬 */
+            color: #333;
+            background-color: transparent; /* 기본 배경 투명 */
+            border: none;
+            font-weight: 500;
+        }
+
+        #sidebar-wrapper .nav-item .nav-link:hover {
+            background-color: #e0e2e5; /* 호버 시 배경색 */
+            color: #000;
+        }
+
+        #sidebar-wrapper .nav-item .nav-link.active {
+            background-color: #e0e2e5; /* 활성화된 메뉴 배경색 */
+            color: #ff4500; /* 활성화된 메뉴 텍스트 색상 */
+            font-weight: bold;
+        }
+        /* + 태그 구독 버튼 스타일 */
+        #sidebar-wrapper .btn-outline-secondary {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        #sidebar-wrapper .btn-outline-secondary:hover {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+
+
+        /* 메인 콘텐츠 영역 스타일 */
+        #content-wrapper {
+            flex-grow: 1;
+            padding: 1rem;
+            background-color: #ffffff; /* 메인 콘텐츠 배경 흰색 */
+            border-radius: 8px; /* 둥근 모서리 */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* 약간의 그림자 */
+        }
+
+          /* 조회한 게시물 관련된 태그 섹션 */
+        .related-tags-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e0e0e0;
+        }
+        .related-tags-list {
+            /* display: flex;  이 줄을 제거하거나 주석 처리 */
+            /* flex-wrap: wrap; 이 줄을 제거하거나 주석 처리 */
+            /* gap: 0.75rem;   이 줄을 제거하거나 주석 처리 */
+            padding-top: 0.5rem; /* row의 음수 마진으로 인한 상단 쏠림 방지 */
+            padding-bottom: 0.5rem; /* row의 음수 마진으로 인한 하단 쏠림 방지 */
+        }
+        .tag-item {
+            display: flex;
+            align-items: center; /* 세로 중앙 정렬 */
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 20px; /* 둥근 모서리 유지 */
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            /* white-space: nowrap;  이 줄을 제거하거나 주석 처리 */
+            margin-bottom: 1rem; /* 각 아이템 아래 간격 (Bootstrap col에 패딩이 있지만, 겹치지 않도록 추가 조절) */
+        }
+        .tag-item .tag-name { /* 태그 이름에 새로운 클래스 추가 */
+            font-weight: bold;
+            color: #333;
+            margin-right: 0.5rem; /* 팔로워 수와의 간격 */
+        }
+        .tag-item .followers {
+            color: #6c757d;
+            margin-right: 1rem; /* 구독 버튼과의 간격 */
+        }
+        .tag-item .btn-subscribe {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            background-color: #007bff;
+            border-color: #007bff;
+            flex-shrink: 0; /* 버튼이 줄어들지 않도록 */
+        }
+        .tag-item .btn-subscribe.subscribed {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: #fff;
+        }
+
+        /* 프로필 이미지 스타일은 이전과 동일 */
+        .tag-item .profile-img-wrapper {
+            width: 30px; /* 이미지 너비 */
+            height: 30px; /* 이미지 높이 */
+            border-radius: 50%; /* 원형으로 만듦 */
+            overflow: hidden; /* 이미지가 원형 밖으로 나가지 않도록 */
+            margin-right: 0.75rem; /* 태그 텍스트와의 간격 */
+            flex-shrink: 0; /* 내용이 많아도 줄어들지 않도록 */
+        }
+        .tag-item .profile-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 이미지가 잘리지 않도록 채움 */
+        }
+
+
+        /* 게시글 목록 */
+        .post-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .post-list-header h3 {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+
+        /* 개별 게시물 카드 */
+        .post-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden; /* 자식 요소 둥근 모서리 적용을 위해 */
+            display: flex; /* 추천/비추천 버튼과 내용 분할 */
+        }
+
+        .post-card .vote-section {
+            background-color: #f8f9fa;
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-width: 40px; /* 투표 섹션 최소 너비 */
+            border-right: 1px solid #e0e0e0;
+        }
+        .post-card .vote-section .btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            padding: 0.2rem;
+            font-size: 1.2rem;
+        }
+        .post-card .vote-section .btn:hover {
+            color: #ff4500; /* 호버 시 빨간색 */
+        }
+        .post-card .vote-section .upvote-count {
+            font-weight: bold;
+            color: #333;
+            margin: 0.2rem 0;
+        }
+
+        .post-card .post-content-area {
+            padding: 1rem;
+            flex-grow: 1;
+        }
+
+        .post-card .post-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        .post-card .post-meta .username {
+            font-weight: bold;
+            color: #333;
+        }
+        .post-card .post-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        .post-card .post-body {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 1rem;
+        }
+        .post-card .post-media {
+            background-color: #e9ecef; /* 미디어 플레이스홀더 배경 */
+            width: 100%;
+            height: 200px; /* 미디어 영역 높이 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #6c757d;
+            font-size: 1rem;
+            border-radius: 4px; /* 둥근 모서리 */
+            margin-top: 1rem;
+        }
+
+        /* 햄버거 메뉴 (모바일) */
+        .navbar-toggler-sidebar {
+            background-color: #ff4500; /* 햄버거 메뉴 버튼 색상 */
+            border-color: #ff4500;
+        }
+        .navbar-toggler-sidebar:hover {
+            background-color: #e03c00;
+            border-color: #e03c00;
+        }
+
+        /* Offcanvas (모바일 사이드바) */
+        .offcanvas-body .nav-item .nav-link {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 4px;
+            text-align: left;
+            color: #333;
+            background-color: transparent;
+            border: none;
+            font-weight: 500;
+        }
+        .offcanvas-body .nav-item .nav-link:hover {
+            background-color: #e0e2e5;
+            color: #000;
+        }
+        .offcanvas-body .nav-item .nav-link.active {
+            background-color: #e0e2e5;
+            color: #ff4500;
+            font-weight: bold;
+        }
+        .offcanvas-body .btn-primary {
+            background-color: #ff4500;
+            border-color: #ff4500;
+        }
+        .offcanvas-body .btn-primary:hover {
+            background-color: #e03c00;
+            border-color: #e03c00;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid d-flex justify-content-between align-items-center">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <img src="{{ url_for('static', filename='img/Gemini_Generated_Image_logo.png') }}" alt="real-time Logo" class="d-inline-block align-text-top">
+                    <span>real-time</span>
+                </a>
+
+                <form class="d-flex header-search-form">
+                    <div class="input-group">
+                        <span class="input-group-text" id="search-addon"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                            aria-describedby="search-addon">
+                    </div>
+                </form>
+
+                <div class="header-auth-buttons">
+                    {# Jinja2: 로그인 상태에 따라 다른 버튼 렌더링 #}
+                    {% if logged_in %}
+                        <span class="me-2 d-none d-lg-block">환영합니다, <b>{{ username }}</b>님!</span>
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger d-none d-lg-block">로그아웃</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-primary d-none d-lg-block">Log In</a>
+                    {% endif %}
+
+                    <button class="navbar-toggler-sidebar btn d-lg-none ms-2" type="button" data-bs-toggle="offcanvas"
+                        data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
+                        <i class="fas fa-bars text-white"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div id="main-content-area" class="container-fluid d-flex">
+        <aside id="sidebar-wrapper" class="d-none d-lg-block">
+            <ul class="nav flex-column mb-3">
+                <li class="nav-item">
+                    <a class="nav-link {% if not active_menu or active_menu == 'home' %}active{% endif %}" aria-current="page" href="#">홈</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'recommended' %}active{% endif %}" href="#">추천글</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'popular' %}active{% endif %}" href="#">인기글</a>
+                </li>
+                {# 로그인했을 때만 보이는 메뉴 #}
+                {% if logged_in %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'my_posts' %}active{% endif %}" href="#">나의 글</a>
+                </li>
+                {% endif %}
+            </ul>
+            <hr>
+            <h5>구독 태그</h5>
+            <ul class="nav flex-column mb-3">
+                <li class="nav-item">
+                    <a class="nav-link btn btn-outline-secondary" href="#">+ 태그 구독</a>
+                </li>
+            </ul>
+            <hr>
+            <h5>카테고리</h5>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="#">게임</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">영화</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">음악</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">IT/기술</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">스포츠</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">더보기</a></li>
+            </ul>
+        </aside>
+
+        <main id="content-wrapper">
+            <section class="related-tags-section mb-4">
+                <h5 class="mb-3">조회한 게시물과 관련된 카테고리</h5>
+                <div class="related-tags-list row row-cols-2">
+                    {% for tag in recommended_tags %}
+                    <div class="tag-item col">
+                        {# 프로필 이미지 영역 #}
+                        <div class="profile-img-wrapper padding">
+                            <img src="{{ tag.profile_image }}" alt="{{ tag.name }} Profile">
+                        </div>
+                        {# 카테고리 이름 (클릭 가능하도록 <a> 태그로 감쌀 수도 있습니다) #}
+                        <span class="tag-name">{{ tag.name }}</span>
+                        <span class="followers">{{ tag.followers }}</span>
+                        <button type="button" class="btn btn-primary btn-subscribe {% if tag.subscribed %}subscribed{% endif %}">
+                            {% if tag.subscribed %}구독중{% else %}구독{% endif %}
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="post-list-section">
+                <div class="post-list-header">
+                    <h3>인기글 V</h3> {# 이미지에서는 드롭다운처럼 보이지만 일단 텍스트로 #}
+                </div>
+
+                {% for post in posts %}
+                <div class="post-card">
+                    <div class="vote-section">
+                        <button class="btn"><i class="fas fa-arrow-up"></i></button>
+                        <span class="upvote-count">{{ post.upvotes }}</span>
+                        <button class="btn"><i class="fas fa-arrow-down"></i></button>
+                    </div>
+                    <div class="post-content-area">
+                        <div class="post-meta">
+                            <span class="username">{{ post.user }}</span> • {{ post.date }} • 조회수 {{ post.views }}
+                        </div>
+                        <h4 class="post-title">{{ post.title }}</h4>
+                        {% if post.content %}
+                        <p class="post-body">{{ post.content }}</p>
+                        {% endif %}
+                        {% if post.media %}
+                        <div class="post-media">
+                            사진 or 미디어 콘텐츠
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+            </section>
+        </main>
+    </div>
+
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">메뉴</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="nav flex-column mb-3">
+                <li class="nav-item">
+                    <a class="nav-link btn btn-light text-start my-1" aria-current="page" href="#">홈</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn btn-light text-start my-1" href="#">추천글</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn btn-light text-start my-1" href="#">인기글</a>
+                </li>
+                {# 로그인했을 때만 보이는 메뉴 (Offcanvas) #}
+                {% if logged_in %}
+                <li class="nav-item">
+                    <a class="nav-link btn btn-light text-start my-1" href="#">나의 글</a>
+                </li>
+                {% endif %}
+            </ul>
+            <hr>
+            <h5>구독 태그</h5>
+            <ul class="nav flex-column mb-3">
+                <li class="nav-item">
+                    <a class="nav-link btn btn-outline-secondary" href="#">+ 태그 구독</a>
+                </li>
+            </ul>
+            <hr>
+            <h5>카테고리</h5>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link btn btn-light text-start my-1" href="#">게임</a></li>
+                <li class="nav-item"><a class="nav-link btn btn-light text-start my-1" href="#">영화</a></li>
+                <li class="nav-item"><a class="nav-link btn btn-light text-start my-1" href="#">음악</a></li>
+                <li class="nav-item"><a class="nav-link btn btn-light text-start my-1" href="#">IT/기술</a></li>
+                <li class="nav-item"><a class="nav-link btn btn-light text-start my-1" href="#">스포츠</a></li>
+                <li class="nav-item"><a class="nav-link btn btn-light text-start my-1" href="#">더보기</a></li>
+            </ul>
+            <hr>
+            <div class="d-grid gap-2 mt-4">
+                {# Jinja2: 로그인 상태에 따라 버튼 렌더링 (Offcanvas) #}
+                {% if logged_in %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">로그아웃</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-primary">로그인</a>
+                    <button type="button" class="btn btn-outline-secondary">회원가입</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>회사 정보</h5>
+                    <p>주소: 서울시 어딘가</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>연락처</h5>
+                    <p>이메일: info@example.com</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>소셜 미디어</h5>
+                    <p>링크들...</p>
+                </div>
+            </div>
+            <hr>
+            <p class="text-center">&copy; 2025 My Website. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

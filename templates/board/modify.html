@@ -1,0 +1,171 @@
+{% include 'include/header.html' %}
+<!-- 컨텐츠 출력 공간 -->
+<script>
+  $(function () {
+    // --- 1. 카테고리 렌더링을 위한 헬퍼 함수 ---
+    // 코드 중복을 줄이기 위해 option 태그를 생성하는 함수를 만듭니다.
+    function renderCategoryOptions(selector, data, selectedValue) {
+      let html = "<option value='0'>대분류</option>";
+      if (selector === '#modify_categorie_no') {
+        html = "<option value=''>소분류</option>"; // 소분류용 기본 텍스트
+      }
+
+      data.forEach(function (item) {
+        const isSelected = item.categorie_no == selectedValue ? " selected" : "";
+        html += `<option value="${item.categorie_no}"${isSelected}>${item.categorie_name}</option>`;
+      });
+      $(selector).html(html);
+    }
+
+    // --- 2. 대분류/소분류 로딩 로직 (비동기 순서 보장) ---
+    // 먼저 대분류를 로드합니다.
+    $.ajax({
+      url: 'parent_categorie.do',
+      type: 'get',
+      success: function (parentData) {
+        const selectedParentNo = {{ modify_board.categorie_parent_no }};
+        renderCategoryOptions('#modify_categorie_parent_no', parentData, selectedParentNo);
+
+        // 대분류 로드가 성공하면, 그 다음에 소분류를 로드합니다.
+        $.ajax({
+          url: `child_categorie.do?categorie_parent_no=${selectedParentNo}`,
+          type: 'get',
+          success: function (childData) {
+            const selectedChildNo = {{ modify_board.categorie_no }};
+            renderCategoryOptions('#modify_categorie_no', childData, selectedChildNo);
+          }
+        });
+      }
+    });
+
+    // --- 3. 대분류 변경 시 소분류 업데이트 (이벤트 핸들러) ---
+    $("#modify_categorie_parent_no").change(function () {
+      const parentNo = $(this).val();
+      if (parentNo == "0") {
+        $("#modify_categorie_no").html("<option value=''>대분류를 선택해주세요.</option>");
+        return;
+      }
+
+      $.ajax({
+        url: 'child_categorie.do',
+        type: 'get',
+        data: { categorie_parent_no: parentNo },
+        success: function (data) {
+          // 대분류가 변경된 소분류는 선택된 값이 없으므로 selectedValue를 전달하지 않습니다.
+          renderCategoryOptions('#modify_categorie_no', data, null);
+        }
+      });
+    });
+
+    // --- 4. Tagify 초기화 및 이벤트 핸들러 ---
+    const input = document.querySelector('#modify_tags');
+    const tagify = new Tagify(input, {
+      pattern: /^#/,
+      delimiters: " ",
+    });
+
+    // 추천 태그 버튼에 data-tag 속성이 있다고 가정합니다.
+    $('#tagRecomend').on('click', 'button', function () {
+      const tagName = $(this).data('tag');
+      if (tagName) {
+        tagify.addTags([tagName]);
+      }
+    });
+
+    // --- 5. 폼 제출 관련 이벤트 ---
+    $("#modifyBtn").click(function () {
+      DoModify();
+    });
+    $("#modify_board_note").change(function(){
+      ReccomendTags();
+    });
+
+    function DoModify() {
+      if (!$("#modify_categorie_no").val()) { // 빈 값 체크를 더 간단하게
+        alert("카테고리를 선택하세요.");
+        $("#modify_categorie_no").focus();
+        return;
+      }
+      if (!$("#modify_board_title").val().trim()) { // 공백만 입력하는 경우 방지
+        alert("제목을 입력하세요.");
+        $("#modify_board_title").focus();
+        return;
+      }
+      if (!$("#modify_board_note").val().trim()) { // 공백만 입력하는 경우 방지
+        alert("내용을 입력하세요.");
+        $("#modify_board_note").focus();
+        return;
+      }
+      if (confirm("게시물 수정을 완료하시겠습니까?")) {
+        $("#modifyFrm").submit();
+      }
+    }
+  });
+
+  function ReccomendTags(){
+    if ($("#modify_board_title").val() == "" || $("#modify_board_note").val() == "") return;
+
+    $.ajax({
+      url: "{{ url_for('api.rec_tags') }}", 
+      type: 'POST',
+      data: { 
+        board_title: $("#modify_board_title").val(), 
+        board_note:  $("#modify_board_note").val() 
+      },
+      success: function(response) {
+        if (response.status === 'success' && response.posts.length > 0) {
+              response.posts.forEach(function(post) { // post = ( data, data )
+                const postHtml = '<button type="button" class="btn btn-outline-primary btn-sm mb-1" data-tag="#' + post[0] + '">#' + post[0] + '</button>&nbsp;';
+                $("#tagRecomend").append(postHtml);
+              });
+          }
+      },
+      error: function(error) {
+          console.error("Error loading posts:", error);
+      }
+    });
+  }
+</script>
+<h3 class="fw-bold my-2"> 글 수정</h3>
+<form method="post" action="/board/modifyok.do" id="modifyFrm">
+  <div class="row">
+    <div class="col">
+      <select class="form-select form-select-lg" aria-label="Large select example" name="categorie_parent_no"
+        id="modify_categorie_parent_no">
+        <option selected>대분류</option>
+      </select>
+    </div>
+    <div class="col">
+      <select class="form-select form-select-lg" aria-label="Large select example" name="categorie_no"
+        id="modify_categorie_no">
+        <option value=''>대분류를 선택해주세요.</option>
+      </select>
+    </div>
+  </div>
+
+  <input type="hidden" name="board_no" value="{{modify_board.board_no}}">
+
+  <div class="input-group-lg my-1">
+    <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg"
+      placeholder="제목을 입력해주세요." value="{{modify_board.board_title}}" name="board_title" id="modify_board_title">
+  </div>
+  <div class="input-group-lg mb-1">
+    <textarea class="form-control" style="height: 300px" name="board_note" id="modify_board_note"
+      placeholder="내용을 입력해주세요.">{{modify_board.board_note}}</textarea>
+  </div>
+  <!-- sns 해시태그 시스템이 들어갈 공간 -->
+  <div class="input-group-lg my-1">
+    <input class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg" name="tags"
+      id="modify_tags" value='{{ tags_json | safe }}' placeholder="#태그 입력 후 엔터 또는 스페이스바">
+  </div>
+
+  <!-- 카테고리 추천 공간 -->
+  <label for="tagRecomend" class="form-label p-1 fw-bold">AI가 작성한 글을 감지해서 태그를 추천해드려요.</label>
+  <div class="p-1" id="tagRecomend">
+  </div>
+  <!-- ******* -->
+  <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+    <button class="btn btn-primary" type="button" id="modifyBtn">완료</button>
+  </div>
+</form>
+{% include 'include/tail.html' %}

@@ -1,0 +1,181 @@
+
+{% include 'include/header.html' %}
+<script>
+  // 페이지가 로드되면 즉시 실행
+  $(function () {
+    // 무한스크롤 변수 초기화
+    currentPage = 2; 
+    isLoading = false;
+    hasNextPage = true;
+  });
+
+  // 무한스크롤을 위한 함수 1
+  function loadMorePosts() {
+    isLoading = true;
+    $('#loader').show();
+
+    $.ajax({
+      url: "{{ url_for('api.get_recommendations_api') }}", // index용 API
+      type: 'GET',
+      data: { page: currentPage },
+      success: function(response) {
+          if (response.status === 'success' && response.posts.length > 0) {
+              response.posts.forEach(function(post) {
+                  const postHtml = createPostHtml(post); // index용 렌더링 함수 호출
+                  $('#post-container').append(postHtml);
+              });
+              currentPage++;
+          } else {
+              hasNextPage = false;
+              $('#end-of-posts').show();
+          }
+      },
+      // ... error, complete 콜백 ...
+      complete: function() {
+          isLoading = false;
+          $('#loader').hide();
+      }
+    });
+  }
+// 추천 페이지용 데이터 로딩 함수
+  function loadMorePosts() {
+      isLoading = true;
+      $('#loader').show();
+
+      $.ajax({
+          url: "{{ url_for('api.get_recommendations_api') }}",
+          type: 'GET',
+          data: { page: currentPage },
+          success: function(response) {
+              if (response.status === 'success' && response.posts.length > 0) {
+                  response.posts.forEach(function(post) {
+                      const postHtml = createPostHtml(post);
+                      $('#post-container').append(postHtml);
+                  });
+                  currentPage++;
+                  hasNextPage = response.has_next;
+              } else {
+                  hasNextPage = false;
+              }
+          },
+          error: function(xhr, status, error) {
+              console.error("Error loading recommendations:", error);
+              hasNextPage = false;
+          },
+          complete: function() {
+              isLoading = false;
+              $('#loader').hide();
+              if (!hasNextPage) {
+                  $('#end-of-posts').show();
+              }
+          }
+      });
+  }
+// 무한스크롤을 위한 함수 2
+function createPostHtml(post) {
+  const template = document.getElementById('post-template');
+  const clone    = document.importNode(template.content, true);
+
+  // --- 데이터 채우는 로직  ---
+  clone.querySelector('.user-pf-img').src = `/static/img/${post.user_pf_img}.jpg`;
+  clone.querySelector('.user-id').textContent = post.user_id;
+  clone.querySelector('.write-date').textContent = post.board_write_date;
+  clone.querySelector('.board-title').textContent = post.board_title;
+  clone.querySelector('.board-note').textContent = post.board_note;
+  clone.querySelector('.vote-count').textContent = post.like_count;
+  
+  const likeButton = clone.querySelector('.vote-btn-single');
+  if (post.user_has_liked) {
+      likeButton.classList.add('active');
+  }
+  likeButton.setAttribute('onclick', `DoLike(this, ${post.board_no})`);
+
+  const tagsContainer = clone.querySelector('.tags-container');
+  post.tags.forEach(tag => {
+      const tagLink = document.createElement('a');
+      tagLink.href = `javascript:GoPage('${tag}');`;
+      tagLink.className = 'badge bg-secondary text-decoration-none me-1';
+      tagLink.textContent = tag;
+      tagsContainer.appendChild(tagLink);
+  });
+
+  const configContainer = clone.querySelector('.config-buttons');
+  if(post.score != 0){
+    configContainer.innerHTML = `
+            <button class="btn btn-sm btn-outline-dark" onclick="location.href='/ai/score_info.do?board_no=${post.board_no}'"><i class="bi bi-android me-1"></i>${post.score}</button>
+        `;
+  }
+  // --- 데이터 채우기 끝 ---
+
+  // index.html에는 캐러셀이 없으므로 제거
+  clone.querySelector('.carousel-container').remove();
+  return clone;
+}
+</script>
+
+
+<div class="d-flex justify-content-center">
+  <div class="pt-2 flex-grow-1">
+    <h3 class="fw-bold m-0">{{ session['user_data']['user_id']}}님께 추천하는 게시글</h3>
+  </div>
+  <div class="pt-2">
+    <button type="button" class="btn btn-outline-secondary" onclick="location.href='/board/write.do'">글 쓰기</button>
+  </div>
+</div>
+
+<div class="bd-b-1 my-3 mx-1"></div>
+
+<!-- 서버에서 미리 렌더링한 첫 페이지 데이터 -->
+{% if board_list %}
+{% for item in board_list %}
+  <div class="post-item">
+    <div class="flex-grow p-2">
+      <div class="d-flex align-items-center">
+          <div class="me-2">
+              <img class="contentBorder user-pf-img" width="60px" height="60px" src="{{ url_for('static', filename='img/' ~ item.user_pf_img ~ '.jpg') }}">
+          </div>
+          <div class="me-auto text-start fs-5">
+              <div class="fw-bold user-id">{{ item.user_id }}</div>
+              <span class="text-muted small write-date">{{ item.board_write_date.strftime('%Y-%m-%d') }}</span>
+          </div>
+          <div class="config-buttons me-2">
+            {% if item.score != 0 %}
+              <button class="btn btn-sm btn-outline-dark" onclick="location.href=`/ai/score_info_rec.do?board_no={{item.board_no}}&user_no={{item.user_no}}&score={{ '%.2f'|format(item.score|float) }}`">
+                  <i class="bi bi-android me-1"></i>{{ '%.2f'|format(item.score) }}
+              </button>
+            {% endif %}
+          </div>
+      </div>
+      <div class="my-2 fs-4">
+          <div class="fw-bold board-title">
+              {{ item.board_title }}
+          </div>
+          <div>
+              <span class="board-note">{{ item.board_note }}</span><br>
+              <span class="tags-container">
+                  {% for tag in item.tags %}
+                  <a href="javascript:GoPage('{{tag}}');" class="badge bg-secondary text-decoration-none me-1">{{tag}}</a>
+                  {% endfor %}
+              </span>
+          </div>
+      </div>
+      <div class="vote-buttons-group">
+          <button class="vote-btn-single {% if item.user_has_liked %}active{% endif %}" type="button" onclick="DoLike(this, {{ item.board_no }})">
+              ❤<span class="vote-count">{{ item.like_count }}</span>
+          </button>
+      </div>
+      <!-- 캐러셀이 있다면 이 위치에 렌더링 -->
+    </div>
+    <div class="bd-b-1 my-3 mx-1"></div>
+  </div>
+{% endfor %}
+{% else %}
+<div class="my-2 fs-4">
+    <div class="fw-bold board-title">
+        추천 게시글이 없습니다.<br>
+        마음에 드는 카테고리를 구독하고 게시글에 ❤를 눌러주세요.
+    </div>
+</div>
+{% endif %}
+
+{% include 'include/tail.html' %}

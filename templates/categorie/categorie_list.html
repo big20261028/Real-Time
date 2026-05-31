@@ -1,0 +1,78 @@
+{% include 'include/header.html' %}
+<style>
+  .categorieBox {
+    border: 1px solid;
+    border-radius: 10px;
+    border-color: lightgray;
+  }
+</style>
+<script>
+  $(function () {
+    $('#categorieListForm select').on('change', function () {
+      //$(this).closest('form').submit();
+      $("#categorieListForm").submit();
+    });
+
+
+
+
+  });
+
+  function DelSubscribe(categorie_no, user_no)
+  {
+    //ajax로 구독 데이터 삭제
+    //버튼 변경
+    $.ajax({
+      
+    });
+  }
+  function AddSubscribe(categorie_no, user_no)
+  {
+
+  }
+
+</script>
+<!-- 컨텐츠 출력 공간 -->
+<div class="d-flex justify-content-center">
+  <div class="pt-2 flex-grow-1">
+    <h3 class="fw-bold m-0">{{ categorie_data[1]['categorie_name'] }}</h3>
+  </div>
+  <div class="pt-2">
+    <form method="get" action="/categorie/categorie_list.do" id="categorieListForm">
+      <input type="hidden" name="categorie_parent_no" value="{{categorie_parent_no}}">
+      <select name="order_key" class="form-select">
+        <option value="subscribe_count desc" {% if order_key=='subscribe_count desc' %}selected{% endif %}>인기순</option>
+        <option value="categorie_no desc" {% if order_key=='categorie_no desc' %}selected{% endif %}>최신순</option>
+        <option value="categorie_no" {% if order_key=='categorie_no' %}selected{% endif %}>오래된순</option>
+      </select>
+    </form>
+  </div>
+</div>
+<div class="bd-b-1 my-3 mx-1"></div>
+<div class="container">
+  {% for item in categorie_data[0] %}
+  <div class="categorieBox p-2 mb-2 contentHover" onclick="location.href='/categorie/categorie_page.do?categorie_no={{item.categorie_no}}'">
+    <div class="p-1 mb-2 d-flex align-items-center">
+      <div class="me-2">
+        <img class="contentBorder bg-body-secondary" src="{{ url_for('static', filename='img/category_icons/' ~ item.categorie_pf_img_name ~ '') }}" width="50px"
+          height="50px">
+      </div>
+      <div class="me-auto text-start">
+        <div class="fw-bold">{{ item.categorie_name }}</div>
+        <div class="text-muted small"><span id="categorie_sub_count_{{ item.categorie_no }}">{{ item.subscribe_count }}</span> 팔로워</div>
+      </div>
+      <div class="vote-buttons-group">
+        <button class="vote-btn-single {% if item.user_has_sub %}active{% endif %}" type="button" onclick="DoSubscribe(event, this, {{ item.categorie_no }})">
+          <span class="vote-count" id="categorie_sub_status_{{ item.categorie_no }}">{% if item.user_has_sub %} 구독 중 {% else %} 구독하기 {% endif %}</span>
+        </button>
+      </div>
+    </div>
+    <div class="p-2">
+      {{ item.categorie_info }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- *************** -->
+{% include 'include/tail.html' %}

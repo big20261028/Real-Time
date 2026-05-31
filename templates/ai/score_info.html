@@ -1,0 +1,34 @@
+{% include 'include/header.html' %}
+
+<h3 class="fw-bold my-2"> AI 관련도 분석 상세</h3>
+<div class="my-2">
+  <div class="p-2 contentBorder d-flex align-items-center contentHover">
+    <div class="me-2">
+      <img class="contentBorder" src="{{ url_for('static', filename='img/' ~ board_dto.user_pf_img ~ '.jpg') }}" width="50px" height="50px">
+    </div>
+    <div class="me-auto text-start">
+      <div class="fw-bold">{{board_dto.board_title|truncate(20, end='...') }}</div>
+      <div class="text-muted small">{{ board_dto.user_id }}</div>
+    </div>
+    <div class="me-2">
+      <button class="btn btn-outline-dark"><i class="bi bi-android me-1"></i>{{score}}</button>
+    </div>
+  </div>
+</div>
+
+<div class="text-center my-2 p-1 contentBorder">
+  <img src="data:image/png;base64,{{ image_data }}" class="rounded img-fluid" alt="유사도 분석 그래프">
+</div>
+
+<div class="bd-b-1 my-3 mx-1"></div>
+
+<div class="flex-grow p-2">
+
+  <div class="my-2 fs-4">
+      <div class="fw-bold my-2">
+        게시글 번호 [{{ board_no }}] 의 점수는 {{score}}
+      </div>
+    </div>
+</div>
+
+{% include 'include/tail.html' %}
